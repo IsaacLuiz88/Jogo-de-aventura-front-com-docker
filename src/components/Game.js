@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import "./Game.css";
+import socket from "../socket";  // Importa o gerenciador de WebSocket
 
 // Função para criar um nó de lista encadeada
 class Node {
@@ -44,7 +45,8 @@ class LinkedList {
   }
 }
 
-const Game = ({ selectedAvatar, difficulty, nickname  }) => {
+
+const Game = ({ selectedAvatar, difficulty, nickname }) => {
   const [blocks, setBlocks] = useState(new LinkedList());
   const [playerPosition, setPlayerPosition] = useState({ x: 100, y: 200 }); // Ajuste a posição inicial da Milta
   const [score, setScore] = useState(0);
@@ -60,6 +62,10 @@ const Game = ({ selectedAvatar, difficulty, nickname  }) => {
   const [totalEnergiaCapturada, setTotalEnergiaCapturada] = useState(0);
   const gameContainerRef = useRef(null);
   const [background, setBackground] = useState("");
+
+  // Adicionando os estados para o chat
+  const [mensagem, setMensagem] = useState("");
+  const [mensagens, setMensagens] = useState([]);
 
   useEffect(() => {
     // Definir o fundo com base na dificuldade
@@ -77,6 +83,25 @@ const Game = ({ selectedAvatar, difficulty, nickname  }) => {
         setBackground("url('./default-background.png')");
     }
   }, [difficulty]);
+
+  // Conectar o WebSocket para mensagens
+  useEffect(() => {
+    socket.on("mensagem", (novaMensagem) => {
+      setMensagens((prev) => [...prev, novaMensagem]);
+    });
+
+  // Limpeza do efeito para remover o listener
+    return () => {
+      socket.off("mensagem");
+    };
+  }, []);
+
+  const enviarMensagem = () => {
+    if (mensagem.trim() !== "") {
+      socket.emit("mensagem", mensagem); // Envia a mensagem
+      setMensagem(""); // Limpa o campo de entrada após enviar
+    }
+  };
 
   const blockImages = {
     normal: "./normal-block.png",
@@ -100,7 +125,7 @@ const Game = ({ selectedAvatar, difficulty, nickname  }) => {
   // Atualizar os blocos (movê-los para a esquerda)
   const updateBlocks = useCallback(() => {
     const updatedBlocks = new LinkedList();
-    let current = blocks.head; 
+    let current = blocks.head;
     let lastBlockX = -1;
     const blockSpeed = difficulty === "hard" ? 20 : difficulty === "medium" ? 15 : 10;
 
@@ -125,17 +150,17 @@ const Game = ({ selectedAvatar, difficulty, nickname  }) => {
   // Lógica de pulo da Milta
   const handleJump = useCallback(() => {
     if (isJumping || isSuperJumping) return; // Impede múltiplos saltos
-  
+
     if (energy >= 3) {
       // Super salto
       setIsSuperJumping(true);
       setEnergy(0);
-  
+
       const jumpHeight = 400; // Aumenta a altura do super salto
       const jumpDuration = 3500; // Aumenta a duração do super salto
-  
+
       setPlayerPosition((prev) => ({ ...prev, y: playerPosition.y - jumpHeight }));
-  
+
       setTimeout(() => {
         setPlayerPosition((prev) => ({ ...prev, y: 200 })); // Ajuste a posição de retorno da Milta
         setIsSuperJumping(false);
@@ -143,12 +168,12 @@ const Game = ({ selectedAvatar, difficulty, nickname  }) => {
     } else {
       // Salto normal
       setIsJumping(true);
-  
+
       const jumpHeight = 300; // Aumenta a altura do salto normal
       const jumpDuration = 1250; // Aumenta a duração do salto normal
-  
+
       setPlayerPosition((prev) => ({ ...prev, y: playerPosition.y - jumpHeight }));
-  
+
       setTimeout(() => {
         setPlayerPosition((prev) => ({ ...prev, y: 200 })); // Ajuste a posição de retorno da Milta
         setIsJumping(false);
@@ -228,17 +253,17 @@ const Game = ({ selectedAvatar, difficulty, nickname  }) => {
 
   if (gameOver) {
     return (
-        <div className="game-over">
-            <h1>Game Over!</h1> {/* Título personalizado */}
-            <p>Score: <strong>{score}</strong></p> {/* Adicionando destaque ao score */}
-            <p>Total Bricks Skipped: <strong>{totalJumpedBlocks}</strong></p>
-            <p>Total Bombs Skipped: <strong>{totalBombasPuladas}</strong></p>
-            <p>Total Bombs Exploded: <strong>{totalBombasExplodidas}</strong></p>
-            <p>Total Energy Captured: <strong>{totalEnergiaCapturada}</strong></p>
-            <p>Nickname: <strong>{nickname}</strong></p> {/* Exibe o nome do jogador */}
-        </div>
+      <div className="game-over">
+        <h1>Game Over!</h1> {/* Título personalizado */}
+        <p>Score: <strong>{score}</strong></p> {/* Adicionando destaque ao score */}
+        <p>Total Bricks Skipped: <strong>{totalJumpedBlocks}</strong></p>
+        <p>Total Bombs Skipped: <strong>{totalBombasPuladas}</strong></p>
+        <p>Total Bombs Exploded: <strong>{totalBombasExplodidas}</strong></p>
+        <p>Total Energy Captured: <strong>{totalEnergiaCapturada}</strong></p>
+        <p>Nickname: <strong>{nickname}</strong></p> {/* Exibe o nome do jogador */}
+      </div>
     );
-}
+  }
 
 
   return (
@@ -262,8 +287,25 @@ const Game = ({ selectedAvatar, difficulty, nickname  }) => {
           </div>
         ))}
       </div>
+
+      {/* Seção de mensagens */}
+      <div className="chat">
+        <ul>
+          {mensagens.map((msg, index) => (
+            <li key={index}>{msg}</li>
+          ))}
+        </ul>
+        <input
+          type="text"
+          value={mensagem}
+          onChange={(e) => setMensagem(e.target.value)}
+          placeholder="Digite uma mensagem..."
+        />
+        <button onClick={enviarMensagem}>Enviar</button>
+      </div>
     </div>
   );
 };
+
 
 export default Game;
