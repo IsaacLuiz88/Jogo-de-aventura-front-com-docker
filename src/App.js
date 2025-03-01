@@ -1,39 +1,65 @@
-// App.js
-import React, { useState } from 'react';
-import WelcomeScreen from './components/WelcomeScreen';
-import AvatarSelection from './components/AvatarSelection';
-import DifficultySelection from './components/DifficultySelection';
-import Game from './components/Game';
-import './App.css';
+import React, { useState } from "react";
+import WelcomeScreen from "./components/WelcomeScreen"; // Tela de boas-vindas
+import AvatarSelection from "./components/AvatarSelection"; // Tela de seleção de avatar
+import DifficultySelection from "./components/DifficultySelection"; // Tela de seleção de dificuldade
+import RoomSelection from "./components/RoomSelection"; // Tela de seleção de sala
+import Game from "./components/Game"; // Tela de jogo
 
-function App() {
-  const [screen, setScreen] = useState('welcome');
-  const [playerData, setPlayerData] = useState({});
-  const [difficulty, setDifficulty] = useState('');
+const App = () => {
+  const [step, setStep] = useState("welcome"); // Inicializa com a tela de boas-vindas
+  const [playerData, setPlayerData] = useState({}); // Estado para armazenar os dados do jogador
+  const [difficulty, setDifficulty] = useState(""); // Estado para armazenar a dificuldade
 
-  const handleStartGame = (data) => {
-    setPlayerData(data); // Salvar dados do jogador, incluindo avatar e nickname
-    setScreen('difficultySelection'); // Mudar para a tela de seleção de dificuldade
+  // Função chamada quando o jogador clica para começar o jogo na tela de boas-vindas
+  const handleStartGame = () => {
+    setStep("avatar"); // Avança para a tela de seleção de avatar
   };
 
+  // Função chamada quando o jogador seleciona o avatar
+  const handleAvatarSelect = (data) => {
+    setPlayerData((prev) => ({ ...prev, ...data })); // Armazena os dados do jogador
+    setStep("difficulty"); // Avança para a tela de seleção de dificuldade
+  };
+
+  // Função chamada quando o jogador seleciona a dificuldade
   const handleDifficultySelect = (level) => {
-    setDifficulty(level);
-    setScreen('game'); // Mudar para a tela do jogo após selecionar a dificuldade
+    setDifficulty(level); // Salva a dificuldade selecionada
+    setStep("room"); // Avança para a tela de seleção de sala
   };
 
+  // Função chamada quando o jogador seleciona a sala
   const handleRoomSelect = (data) => {
-    setPlayerData((prev) => ({ ...prev, ...data }));
-    setStep("game"); // Agora inicia o jogo corretamente
+    setPlayerData((prev) => ({ ...prev, ...data })); // Salva os dados da sala
+    setStep("game"); // Avança para a tela do jogo
   };
-  
+
   return (
-    <div className="App">
-      {screen === 'welcome' && <WelcomeScreen onPlay={() => setScreen('avatarSelection')} />}
-      {screen === 'avatarSelection' && <AvatarSelection onAvatarSelect={handleStartGame} />}
-      {screen === 'difficultySelection' && <DifficultySelection onDifficultySelect={handleDifficultySelect} />}
-      {screen === 'game' && <Game selectedAvatar={playerData.avatar} nickname={playerData.nickname} difficulty={difficulty} />} {/* Passando o nickname */}
+    <div>
+      {/* Tela de boas-vindas */}
+      {step === "welcome" && <WelcomeScreen onPlay={handleStartGame} />}
+
+      {/* Tela de seleção de avatar */}
+      {step === "avatar" && <AvatarSelection onAvatarSelect={handleAvatarSelect} />}
+
+      {/* Tela de seleção de dificuldade */}
+      {step === "difficulty" && (
+        <DifficultySelection onDifficultySelect={handleDifficultySelect} />
+      )}
+
+      {/* Tela de seleção de sala */}
+      {step === "room" && <RoomSelection onRoomSelect={handleRoomSelect} />}
+
+      {/* Tela do jogo */}
+      {step === "game" && (
+        <Game
+          selectedAvatar={playerData.avatar}
+          nickname={playerData.nickname}
+          roomName={playerData.roomName}
+          difficulty={difficulty} // Passando a dificuldade escolhida para o jogo
+        />
+      )}
     </div>
   );
-}
+};
 
 export default App;

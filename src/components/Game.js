@@ -45,7 +45,7 @@ class LinkedList {
   }
 }
 
-const Game = ({ selectedAvatar, difficulty, nickname }) => {
+const Game = ({ selectedAvatar, nickname, roomName, difficulty }) => {
   // Estados do Jogo
   const [blocks, setBlocks] = useState(new LinkedList());
   const [playerPosition, setPlayerPosition] = useState({ x: 100, y: 200 });
@@ -64,11 +64,9 @@ const Game = ({ selectedAvatar, difficulty, nickname }) => {
   const [background, setBackground] = useState("");
 
   // Estados para o chat multiplayer
-  const [nome, setNome] = useState("");
-  const [sala, setSala] = useState("");
-  const [jogadores, setJogadores] = useState([]);
   const [mensagem, setMensagem] = useState("");
   const [mensagens, setMensagens] = useState([]);
+  const [jogadores, setJogadores] = useState([]);
 
   // Efeito para configurar o fundo de acordo com a dificuldade
   useEffect(() => {
@@ -112,11 +110,11 @@ const Game = ({ selectedAvatar, difficulty, nickname }) => {
   };
 
   // Função para entrar na sala multiplayer
-  const entrar = () => {
-    if (nome.trim() && sala.trim()) {
-      entrarNaSala(sala, nome); // Envia o nome e a sala para o servidor
+  useEffect(() => {
+    if (nickname && roomName) {
+      entrarNaSala(roomName, nickname); // Envia o nome e a sala para o servidor
     }
-  };
+  }, [nickname, roomName]);
 
   // Gerar blocos aleatórios para o jogo
   const generateBlock = useCallback(() => {
@@ -283,6 +281,23 @@ const Game = ({ selectedAvatar, difficulty, nickname }) => {
         <div className="life">❤️ {life}</div>
         <div className="energy">⚡ {energy}</div>
         <div className="score">Score: {score}</div>
+        {/* Chat Multiplayer */}
+        <div className="chat">
+          <h1>Sala: {roomName}</h1>
+          <h2>Jogador: {nickname}</h2>
+          <ul>
+            {mensagens.map((msg, index) => (
+              <li key={index}>{msg}</li>
+            ))}
+          </ul>
+          <input
+            type="text"
+            value={mensagem}
+            onChange={(e) => setMensagem(e.target.value)}
+            placeholder="Digite uma mensagem..."
+          />
+          <button onClick={enviarMensagem}>Enviar</button>
+        </div>
       </div>
       <div className="blocks-container">
         {blocks.toArray().map((block, index) => (
@@ -296,34 +311,7 @@ const Game = ({ selectedAvatar, difficulty, nickname }) => {
         ))}
       </div>
 
-      {/* Chat Multiplayer */}
-      <div className="chat">
-        <input
-          type="text"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          placeholder="Seu Nome"
-        />
-        <input
-          type="text"
-          value={sala}
-          onChange={(e) => setSala(e.target.value)}
-          placeholder="Nome da Sala"
-        />
-        <button onClick={entrar}>Entrar na Sala</button>
-        <ul>
-          {mensagens.map((msg, index) => (
-            <li key={index}>{msg}</li>
-          ))}
-        </ul>
-        <input
-          type="text"
-          value={mensagem}
-          onChange={(e) => setMensagem(e.target.value)}
-          placeholder="Digite uma mensagem..."
-        />
-        <button onClick={enviarMensagem}>Enviar</button>
-      </div>
+
     </div>
   );
 };

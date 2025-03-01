@@ -10,10 +10,8 @@ const AvatarSelection = ({ onAvatarSelect }) => {
     };
 
     const handleStartGame = () => {
-        if (selectedAvatar && nickname) {
-            onAvatarSelect({ avatar: selectedAvatar, nickname });
-        } else {
-            alert("Selecione um avatar e digite seu nome!");
+        if (selectedAvatar) {
+            onAvatarSelect({ avatar: selectedAvatar });
         }
     };
 
@@ -38,12 +36,6 @@ const AvatarSelection = ({ onAvatarSelect }) => {
                     <h2>Milta for boys</h2>
                 </div>
             </div>
-            <input
-                type="text"
-                placeholder="Who will guide Milta?"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-            />
             <button onClick={handleStartGame}>Enter</button>
         </div>
     );
