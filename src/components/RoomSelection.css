@@ -1,0 +1,56 @@
+/* RoomSelection.css */
+
+.room-selection-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #121212;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+  }
+  
+  .room-selection-title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  .room-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 80%;
+    max-width: 400px;
+  }
+  
+  .room-item {
+    background: #1e1e1e;
+    padding: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+    text-align: center;
+  }
+  
+  .room-item:hover {
+    background: #272727;
+  }
+  
+  .create-room-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background: #ff9900;
+    color: #000;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  .create-room-btn:hover {
+    background: #cc7a00;
+  }
+  
