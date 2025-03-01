@@ -21,6 +21,11 @@ function App() {
     setScreen('game'); // Mudar para a tela do jogo após selecionar a dificuldade
   };
 
+  const handleRoomSelect = (data) => {
+    setPlayerData((prev) => ({ ...prev, ...data }));
+    setStep("game"); // Agora inicia o jogo corretamente
+  };
+  
   return (
     <div className="App">
       {screen === 'welcome' && <WelcomeScreen onPlay={() => setScreen('avatarSelection')} />}
