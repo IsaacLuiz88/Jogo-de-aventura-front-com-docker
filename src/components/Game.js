@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import socket, { entrarNaSala } from "../socket";
 import "./Game.css";
-import socket from "../socket";  // Importa o gerenciador de WebSocket
 
 // Função para criar um nó de lista encadeada
 class Node {
@@ -45,10 +45,10 @@ class LinkedList {
   }
 }
 
-
 const Game = ({ selectedAvatar, difficulty, nickname }) => {
+  // Estados do Jogo
   const [blocks, setBlocks] = useState(new LinkedList());
-  const [playerPosition, setPlayerPosition] = useState({ x: 100, y: 200 }); // Ajuste a posição inicial da Milta
+  const [playerPosition, setPlayerPosition] = useState({ x: 100, y: 200 });
   const [score, setScore] = useState(0);
   const [life, setLife] = useState(difficulty === "hard" ? 1 : difficulty === "medium" ? 3 : 5);
   const [energy, setEnergy] = useState(0);
@@ -58,17 +58,20 @@ const Game = ({ selectedAvatar, difficulty, nickname }) => {
   const [jumpedBlocks, setJumpedBlocks] = useState(new Set());
   const [totalJumpedBlocks, setTotalJumpedBlocks] = useState(0);
   const [totalBombasPuladas, setTotalBombasPuladas] = useState(0);
-  const [totalBombasExplodidas, setTotalBombasExplodidas] = useState(0); // Corrigido para usar useState
+  const [totalBombasExplodidas, setTotalBombasExplodidas] = useState(0);
   const [totalEnergiaCapturada, setTotalEnergiaCapturada] = useState(0);
   const gameContainerRef = useRef(null);
   const [background, setBackground] = useState("");
 
-  // Adicionando os estados para o chat
+  // Estados para o chat multiplayer
+  const [nome, setNome] = useState("");
+  const [sala, setSala] = useState("");
+  const [jogadores, setJogadores] = useState([]);
   const [mensagem, setMensagem] = useState("");
   const [mensagens, setMensagens] = useState([]);
 
+  // Efeito para configurar o fundo de acordo com a dificuldade
   useEffect(() => {
-    // Definir o fundo com base na dificuldade
     switch (difficulty) {
       case "easy":
         setBackground("url('./easy-background.png')");
@@ -84,33 +87,38 @@ const Game = ({ selectedAvatar, difficulty, nickname }) => {
     }
   }, [difficulty]);
 
-  // Conectar o WebSocket para mensagens
+  // Conectar WebSocket para o chat multiplayer
   useEffect(() => {
     socket.on("mensagem", (novaMensagem) => {
       setMensagens((prev) => [...prev, novaMensagem]);
     });
+    socket.on("atualizarJogadores", (listaJogadores) => {
+      setJogadores(listaJogadores);
+    });
 
-  // Limpeza do efeito para remover o listener
+    // Limpeza do efeito para remover os listeners
     return () => {
       socket.off("mensagem");
+      socket.off("atualizarJogadores");
     };
   }, []);
 
+  // Função para enviar uma mensagem no chat
   const enviarMensagem = () => {
     if (mensagem.trim() !== "") {
-      socket.emit("mensagem", mensagem); // Envia a mensagem
+      socket.emit("mensagem", mensagem); // Envia a mensagem para o servidor
       setMensagem(""); // Limpa o campo de entrada após enviar
     }
   };
 
-  const blockImages = {
-    normal: "./normal-block.png",
-    explosive: "./explosive-block.png",
-    energy: "./energy-block.png",
-    bonus: "./bonus-block.png",
+  // Função para entrar na sala multiplayer
+  const entrar = () => {
+    if (nome.trim() && sala.trim()) {
+      entrarNaSala(sala, nome); // Envia o nome e a sala para o servidor
+    }
   };
 
-  // Gerar blocos aleatórios
+  // Gerar blocos aleatórios para o jogo
   const generateBlock = useCallback(() => {
     const blockTypes = ["normal", "explosive", "energy", "bonus"];
     const randomType = blockTypes[Math.floor(Math.random() * blockTypes.length)];
@@ -118,11 +126,11 @@ const Game = ({ selectedAvatar, difficulty, nickname }) => {
     return {
       type: randomType,
       x: window.innerWidth - 80,
-      y: 150 + Math.floor(Math.random() * 50), // Ajuste a posição Y dos blocos
+      y: 150 + Math.floor(Math.random() * 50), // Posição Y dos blocos
     };
   }, []);
 
-  // Atualizar os blocos (movê-los para a esquerda)
+  // Atualizar a posição dos blocos
   const updateBlocks = useCallback(() => {
     const updatedBlocks = new LinkedList();
     let current = blocks.head;
@@ -147,7 +155,7 @@ const Game = ({ selectedAvatar, difficulty, nickname }) => {
     setBlocks(updatedBlocks);
   }, [blocks, generateBlock, difficulty]);
 
-  // Lógica de pulo da Milta
+  // Lógica de pulo da Milta (personagem)
   const handleJump = useCallback(() => {
     if (isJumping || isSuperJumping) return; // Impede múltiplos saltos
 
@@ -156,33 +164,33 @@ const Game = ({ selectedAvatar, difficulty, nickname }) => {
       setIsSuperJumping(true);
       setEnergy(0);
 
-      const jumpHeight = 400; // Aumenta a altura do super salto
-      const jumpDuration = 3500; // Aumenta a duração do super salto
+      const jumpHeight = 400;
+      const jumpDuration = 3500;
 
       setPlayerPosition((prev) => ({ ...prev, y: playerPosition.y - jumpHeight }));
 
       setTimeout(() => {
-        setPlayerPosition((prev) => ({ ...prev, y: 200 })); // Ajuste a posição de retorno da Milta
+        setPlayerPosition((prev) => ({ ...prev, y: 200 }));
         setIsSuperJumping(false);
       }, jumpDuration);
     } else {
       // Salto normal
       setIsJumping(true);
 
-      const jumpHeight = 300; // Aumenta a altura do salto normal
-      const jumpDuration = 1250; // Aumenta a duração do salto normal
+      const jumpHeight = 300;
+      const jumpDuration = 1250;
 
       setPlayerPosition((prev) => ({ ...prev, y: playerPosition.y - jumpHeight }));
 
       setTimeout(() => {
-        setPlayerPosition((prev) => ({ ...prev, y: 200 })); // Ajuste a posição de retorno da Milta
+        setPlayerPosition((prev) => ({ ...prev, y: 200 }));
         setIsJumping(false);
       }, jumpDuration);
     }
     setTotalJumpedBlocks((prev) => prev + 1);
   }, [playerPosition, isJumping, isSuperJumping, energy]);
 
-  // Verificar colisões
+  // Verificar colisões entre os blocos e o personagem
   const checkCollisions = useCallback(() => {
     let current = blocks.head;
     const newJumpedBlocks = new Set(jumpedBlocks);
@@ -190,25 +198,24 @@ const Game = ({ selectedAvatar, difficulty, nickname }) => {
     while (current) {
       const block = current.value;
 
-      // Verifica se o bloco está na mesma faixa horizontal e na faixa de altura da Milta
-      const isInHorizontalRange = block.x < playerPosition.x + 70 && block.x + 70 > playerPosition.x; // Colisão horizontal
-      const isAboveMilta = block.y < playerPosition.y + 70 && block.y + 70 > playerPosition.y; // Ajuste a altura da Milta conforme necessário
+      // Verifica se o bloco está na mesma faixa horizontal e na faixa de altura do personagem
+      const isInHorizontalRange = block.x < playerPosition.x + 70 && block.x + 70 > playerPosition.x;
+      const isAboveMilta = block.y < playerPosition.y + 70 && block.y + 70 > playerPosition.y;
 
       if (isInHorizontalRange && isAboveMilta) {
-        // Verifica se o bloco já foi contabilizado
         if (!newJumpedBlocks.has(block)) {
           newJumpedBlocks.add(block);
 
-          // Lógica de colisão
+          // Lógica de colisão com os blocos
           if (block.type === "explosive") {
             if (!isSuperJumping) {
               setLife((prev) => prev - 1);
               if (life <= 1) setGameOver(true);
             }
-            setTotalBombasExplodidas((prev) => prev + 1); // Contabiliza a bomba explodida
+            setTotalBombasExplodidas((prev) => prev + 1);
           } else if (block.type === "energy") {
             setEnergy((prev) => Math.min(prev + 1, 3));
-            setTotalEnergiaCapturada((prev) => prev + 1); // Contabiliza a energia capturada
+            setTotalEnergiaCapturada((prev) => prev + 1);
           } else if (block.type === "bonus") {
             setScore((prev) => prev + 10);
           } else {
@@ -216,10 +223,8 @@ const Game = ({ selectedAvatar, difficulty, nickname }) => {
           }
         }
       } else if (block.type === "explosive" && block.x < playerPosition.x) {
-        // Incrementar contagem de bombas puladas se a bomba passou pela Milta
         setTotalBombasPuladas((prev) => prev + 1);
       } else if (block.type !== "explosive" && block.x < playerPosition.x) {
-        // Incrementar contagem de blocos pulados, exceto explosivos
         setTotalJumpedBlocks((prev) => prev + 1);
       }
 
@@ -229,6 +234,7 @@ const Game = ({ selectedAvatar, difficulty, nickname }) => {
     setJumpedBlocks(newJumpedBlocks);
   }, [blocks, playerPosition, isSuperJumping, life, jumpedBlocks]);
 
+  // Efeito para atualizar os blocos e verificar colisões
   useEffect(() => {
     if (gameOver) return;
 
@@ -240,6 +246,7 @@ const Game = ({ selectedAvatar, difficulty, nickname }) => {
     return () => clearInterval(gameInterval);
   }, [updateBlocks, checkCollisions, gameOver]);
 
+  // Efeito para ouvir eventos de tecla para pular
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.code === "Space") {
@@ -251,21 +258,22 @@ const Game = ({ selectedAvatar, difficulty, nickname }) => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleJump]);
 
+  // Exibição da tela de Game Over
   if (gameOver) {
     return (
       <div className="game-over">
-        <h1>Game Over!</h1> {/* Título personalizado */}
-        <p>Score: <strong>{score}</strong></p> {/* Adicionando destaque ao score */}
+        <h1>Game Over!</h1>
+        <p>Score: <strong>{score}</strong></p>
         <p>Total Bricks Skipped: <strong>{totalJumpedBlocks}</strong></p>
         <p>Total Bombs Skipped: <strong>{totalBombasPuladas}</strong></p>
         <p>Total Bombs Exploded: <strong>{totalBombasExplodidas}</strong></p>
         <p>Total Energy Captured: <strong>{totalEnergiaCapturada}</strong></p>
-        <p>Nickname: <strong>{nickname}</strong></p> {/* Exibe o nome do jogador */}
+        <p>Nickname: <strong>{nickname}</strong></p>
       </div>
     );
   }
 
-
+  // Exibição do jogo e do chat
   return (
     <div className="game-container" ref={gameContainerRef} style={{ backgroundImage: background }}>
       <div className={`avatar game-avatar ${isJumping || isSuperJumping ? 'jumping' : ''}`}>
@@ -283,13 +291,26 @@ const Game = ({ selectedAvatar, difficulty, nickname }) => {
             className="block"
             style={{ left: block.x, position: "absolute", bottom: 0 }}
           >
-            <img src={blockImages[block.type]} alt={block.type} />
+            <img src={`./${block.type}-block.png`} alt={block.type} />
           </div>
         ))}
       </div>
 
-      {/* Seção de mensagens */}
+      {/* Chat Multiplayer */}
       <div className="chat">
+        <input
+          type="text"
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          placeholder="Seu Nome"
+        />
+        <input
+          type="text"
+          value={sala}
+          onChange={(e) => setSala(e.target.value)}
+          placeholder="Nome da Sala"
+        />
+        <button onClick={entrar}>Entrar na Sala</button>
         <ul>
           {mensagens.map((msg, index) => (
             <li key={index}>{msg}</li>
@@ -306,6 +327,5 @@ const Game = ({ selectedAvatar, difficulty, nickname }) => {
     </div>
   );
 };
-
 
 export default Game;
