@@ -4,6 +4,7 @@ import AvatarSelection from "./components/AvatarSelection"; // Tela de seleção
 import DifficultySelection from "./components/DifficultySelection"; // Tela de seleção de dificuldade
 import RoomSelection from "./components/RoomSelection"; // Tela de seleção de sala
 import Game from "./components/Game"; // Tela de jogo
+import GameOver from "./components/GameOver"; // Tela de Game Over
 
 const App = () => {
   const [step, setStep] = useState("welcome"); // Inicializa com a tela de boas-vindas
@@ -33,6 +34,11 @@ const App = () => {
     setStep("game"); // Avança para a tela do jogo
   };
 
+  // Função chamada quando o jogo termina e o jogador quer voltar para a sala
+  const handleGameOver = () => {
+    setStep("room"); // Retorna para a tela de seleção de sala
+  };
+
   return (
     <div>
       {/* Tela de boas-vindas */}
@@ -56,8 +62,12 @@ const App = () => {
           nickname={playerData.nickname}
           roomName={playerData.roomName}
           difficulty={difficulty} // Passando a dificuldade escolhida para o jogo
+          onGameOver={handleGameOver} // Chama a função quando o jogo termina
         />
       )}
+
+      {/* Tela de Game Over */}
+      {step === "gameover" && <GameOver onReturnToRoom={handleGameOver} />}
     </div>
   );
 };

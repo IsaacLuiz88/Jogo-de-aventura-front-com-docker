@@ -1,0 +1,59 @@
+.room-container {
+    display: flex;
+    height: 100vh;
+  }
+  
+  .left-panel {
+    width: 15%;
+    padding: 10px;
+    background-color: #222;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .game-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #111;
+    color: white;
+  }
+  
+  .chat-panel {
+    width: 20%;
+    padding: 10px;
+    background-color: #333;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .chat-messages {
+    flex-grow: 1;
+    width: 100%;
+    overflow-y: auto;
+    max-height: 80%;
+    padding: 10px;
+    background: #444;
+  }
+  
+  .chat-panel input {
+    width: 90%;
+    margin-top: 5px;
+    padding: 5px;
+  }
+  
+  .chat-panel button {
+    width: 95%;
+    margin-top: 5px;
+    padding: 5px;
+    background: #ff5722;
+    border: none;
+    color: white;
+    cursor: pointer;
+  }
+  
